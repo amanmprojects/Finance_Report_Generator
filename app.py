@@ -18,16 +18,12 @@ def display_evaluation_metrics(evaluation):
         with col1:
             st.subheader("Quality Scores")
             for metric, score in evaluation.get('scores', {}).items():
-                st.metric(metric, f"{score}/10")
+                st.metric(metric, f"{score}/10")    
         
         with col2:
             st.subheader("Areas for Improvement")
             for improvement in evaluation.get('improvements', []):
                 st.write(f"• {improvement}")
-        
-        st.subheader("Verification Checklist")
-        for item in evaluation.get('checklist', {}):
-            st.checkbox(item, value=True, disabled=True)
     except Exception as e:
         st.error(f"Error displaying evaluation metrics: {str(e)}")
 
