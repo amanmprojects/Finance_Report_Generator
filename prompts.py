@@ -1,4 +1,3 @@
-# English Prompts
 SYSTEM_CONTEXT = """You are an elite financial analyst AI with expertise in quantitative finance, behavioral economics, and advanced market microstructure analysis. 
 Your analysis incorporates cutting-edge methodologies including machine learning models, Monte Carlo simulations, and real-time market sentiment analysis.
 You provide institutional-grade insights backed by rigorous statistical validation and cross-market correlation analysis."""
@@ -67,7 +66,7 @@ Generate a comprehensive market trends analysis report incorporating advanced an
 FINANCIAL_PROJECTIONS_PROMPT = """[CONTEXT]
 Company: {company}
 Timeframe: {timeframe}
-Metrics: {metrics}
+Metrics to analyze: {metrics}
 Historical Data Range: {historical_range}
 Confidence Level: {confidence_level}
 

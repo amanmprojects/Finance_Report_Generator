@@ -2,13 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openai
 from langchain.chains import LLMChain
-from datetime import datetime
-import pandas as pd
-import re
-import json
-from typing import Dict, List, Union, Optional
-from dotenv import load_dotenv
-import os
 from prompts import (
     SYSTEM_CONTEXT,
     MARKET_TRENDS_PROMPT,
@@ -16,7 +9,13 @@ from prompts import (
     INVESTMENT_RECOMMENDATIONS_PROMPT,
     EVALUATION_TEMPLATE
 )
-from translated_prompts import LANGUAGES
+import os
+from dotenv import load_dotenv
+import pandas as pd
+import re
+from datetime import datetime
+import json
+from typing import Dict, List, Union, Optional
 
 load_dotenv()
 
@@ -322,6 +321,8 @@ Template:
     
     def generate_market_analysis(self, company: str, industry: str, timeframe: str, market_cap: float = 100.0, geographic_focus: str = "North America, Europe") -> Dict:
         """Generate comprehensive market analysis with evaluation."""
+        from translated_prompts import LANGUAGES
+        
         prompt = LANGUAGES[self.language]["market_trends"].format(
             company=company,
             industry=industry,
@@ -341,6 +342,8 @@ Template:
     
     def generate_financial_forecast(self, company: str, timeframe: str, metrics: str) -> Dict:
         """Generate financial forecast with evaluation."""
+        from translated_prompts import LANGUAGES
+        
         prompt = LANGUAGES[self.language]["financial_projections"].format(
             company=company,
             timeframe=timeframe,
@@ -360,6 +363,8 @@ Template:
     
     def generate_investment_advice(self, company: str, risk_profile: str, investment_horizon: str) -> Dict:
         """Generate investment recommendations with evaluation."""
+        from translated_prompts import LANGUAGES
+        
         prompt = LANGUAGES[self.language]["investment_recommendations"].format(
             company=company,
             risk_profile=risk_profile,
