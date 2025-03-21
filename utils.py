@@ -2,6 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openai
 from langchain.chains import LLMChain
+from datetime import datetime
+import pandas as pd
+import re
+import json
+from typing import Dict, List, Union, Optional
+from dotenv import load_dotenv
+import os
 from prompts import (
     SYSTEM_CONTEXT,
     MARKET_TRENDS_PROMPT,
@@ -9,13 +16,7 @@ from prompts import (
     INVESTMENT_RECOMMENDATIONS_PROMPT,
     EVALUATION_TEMPLATE
 )
-import os
-from dotenv import load_dotenv
-import pandas as pd
-import re
-from datetime import datetime
-import json
-from typing import Dict, List, Union, Optional
+from translated_prompts import LANGUAGES
 
 load_dotenv()
 
@@ -40,17 +41,28 @@ def generate_completion(prompt_text: str) -> str:
     ]
     
     try:
+        # First attempt with higher token limit
         response = client.chat.completions.create(
             model=os.getenv("MODEL_NAME", "deepseek-ai/DeepSeek-R1"),
             messages=messages,
             temperature=0.7,
-            max_tokens=2000
+            max_tokens=10000  # Increased token limit
         )
-        print(clean_model_output(response.choices[0].message.content))
-        return clean_model_output(response.choices[0].message.content)
+        
+        content = response.choices[0].message.content
+        
+        # Check if response was truncated
+        if response.choices[0].finish_reason == "length":
+            print("Warning: Response was truncated due to length limits")
+        
+        # Clean and return the response
+        cleaned_content = clean_model_output(content)
+        print(cleaned_content)
+        return cleaned_content
+        
     except Exception as e:
         print(f"Error generating completion: {str(e)}")
-        return ""
+        return f"Error generating response: {str(e)}"
 
 def generate_market_trends_report(company, industry, timeframe):
     """Generate market trends report using Together AI."""
@@ -271,8 +283,9 @@ def create_financial_visualization(data: pd.DataFrame, title: str, xlabel: str =
         return fig
 
 class FinancialAnalysis:
-    def __init__(self):
+    def __init__(self, language="English"):
         self.client = setup_client()
+        self.language = language
         
     def evaluate_report(self, report: str) -> Dict:
         """Evaluate the quality of a generated report."""
@@ -309,7 +322,7 @@ Template:
     
     def generate_market_analysis(self, company: str, industry: str, timeframe: str, market_cap: float = 100.0, geographic_focus: str = "North America, Europe") -> Dict:
         """Generate comprehensive market analysis with evaluation."""
-        prompt = MARKET_TRENDS_PROMPT.format(
+        prompt = LANGUAGES[self.language]["market_trends"].format(
             company=company,
             industry=industry,
             timeframe=timeframe,
@@ -328,7 +341,7 @@ Template:
     
     def generate_financial_forecast(self, company: str, timeframe: str, metrics: str) -> Dict:
         """Generate financial forecast with evaluation."""
-        prompt = FINANCIAL_PROJECTIONS_PROMPT.format(
+        prompt = LANGUAGES[self.language]["financial_projections"].format(
             company=company,
             timeframe=timeframe,
             metrics=metrics,
@@ -347,7 +360,7 @@ Template:
     
     def generate_investment_advice(self, company: str, risk_profile: str, investment_horizon: str) -> Dict:
         """Generate investment recommendations with evaluation."""
-        prompt = INVESTMENT_RECOMMENDATIONS_PROMPT.format(
+        prompt = LANGUAGES[self.language]["investment_recommendations"].format(
             company=company,
             risk_profile=risk_profile,
             investment_horizon=investment_horizon,
