@@ -1,13 +1,22 @@
 import streamlit as st
 import pandas as pd
 import yfinance as yf
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime
+import os
 from utils import (
     FinancialAnalysis,
     create_stock_visualization,
     create_financial_visualization,
-    generate_mock_data
+    generate_mock_data,
+    display_news_articles,
+    setup_client
 )
-from translated_prompts import LANGUAGES
+from translated_prompts import LANGUAGES, UI_TRANSLATIONS
+import markdown
+import pdfkit
+import tempfile
 
 st.set_page_config(page_title="AI Financial Analysis", layout="wide")
 
@@ -37,19 +46,6 @@ def display_stock_metrics(stock_data, language="English"):
             st.metric(LANGUAGES[language]["ui"]["volatility"], f"{metrics.get('volatility', 0):.2%}")
     except Exception as e:
         st.error(f"{LANGUAGES[language]['ui']['error_displaying_metrics']}: {str(e)}")
-
-def display_news_articles(news_articles, language="English"):
-    """Display news articles in a structured format."""
-    if not news_articles:
-        return
-    
-    st.subheader(LANGUAGES[language]["ui"]["news_title"])
-    for article in news_articles:
-        with st.expander(article['title']):
-            st.write(f"**{LANGUAGES[language]['ui']['news_publisher']}:** {article['source']}")
-            st.write(f"**{LANGUAGES[language]['ui']['news_date']}:** {article['published']}")
-            st.write(article['description'])
-            st.markdown(f"[{LANGUAGES[language]['ui']['news_link']}]({article['link']})")
 
 def generate_all_reports(financial_analyzer, company, industry, timeframe, risk_profile, investment_horizon):
     """Generate all reports at once."""
@@ -89,6 +85,44 @@ def generate_all_reports(financial_analyzer, company, industry, timeframe, risk_
         reports['error'] = str(e)
 
     return reports
+
+def generate_pdf_report(all_reports, company, language="English"):
+    """Generate a PDF report from the markdown content."""
+    ui = UI_TRANSLATIONS[language]
+    
+    try:
+        # Create markdown content
+        markdown_content = f"""# {company} Financial Analysis Report
+Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## {ui["market_trends_analysis"]}
+{all_reports['market_trends']['report']}
+
+## {ui["financial_projections"]}
+{all_reports['financial_projections']['report']}
+
+## {ui["investment_recommendations"]}
+{all_reports['investment_recommendations']['report']}
+"""
+        
+        # Convert markdown to HTML
+        html_content = markdown.markdown(markdown_content)
+        
+        # Create a temporary file for the PDF
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+            pdf_path = tmp_file.name
+        
+        # Configure wkhtmltopdf path (default Windows installation path)
+        config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+        
+        # Convert HTML to PDF
+        pdfkit.from_string(html_content, pdf_path, configuration=config)
+        
+        return pdf_path
+    except Exception as e:
+        st.error(f"Error generating PDF: {str(e)}")
+        st.info("Please make sure wkhtmltopdf is installed. You can download it from: https://wkhtmltopdf.org/downloads.html")
+        return None
 
 def main():
     # Initialize selected_language with default value
@@ -158,6 +192,21 @@ def main():
                 )
             if all_reports.get('success', False):
                 st.success(ui["success"])
+                
+                # Generate PDF report
+                pdf_path = generate_pdf_report(all_reports, company, selected_language)
+                
+                # Add download button for PDF
+                with open(pdf_path, "rb") as pdf_file:
+                    st.download_button(
+                        label="📥 Download PDF Report",
+                        data=pdf_file,
+                        file_name=f"{company}_financial_report.pdf",
+                        mime="application/pdf"
+                    )
+                
+                # Clean up temporary file
+                os.unlink(pdf_path)
             else:
                 st.error(ui["error"].format(all_reports.get('error', 'Unknown error')))
 

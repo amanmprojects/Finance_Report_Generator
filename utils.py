@@ -11,6 +11,7 @@ import json
 from typing import Dict, List, Union, Optional
 from translated_prompts import LANGUAGES
 from duckduckgo_service import DuckDuckGoNewsService
+import streamlit as st
 
 load_dotenv()
 
@@ -318,6 +319,19 @@ def create_financial_visualization(data: pd.DataFrame, title: str, xlabel: str =
                 ha='center', va='center')
         ax.axis('off')
         return fig
+
+def display_news_articles(news_articles, language="English"):
+    """Display news articles in a structured format."""
+    if not news_articles:
+        return
+    
+    st.subheader(LANGUAGES[language]["ui"]["news_title"])
+    for article in news_articles:
+        with st.expander(article['title']):
+            st.write(f"**{LANGUAGES[language]['ui']['news_publisher']}:** {article['source']}")
+            st.write(f"**{LANGUAGES[language]['ui']['news_date']}:** {article['published']}")
+            st.write(article['description'])
+            st.markdown(f"[{LANGUAGES[language]['ui']['news_link']}]({article['link']})")
 
 class FinancialAnalysis:
     def __init__(self, language="English"):
