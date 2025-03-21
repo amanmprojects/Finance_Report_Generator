@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from utils import (
     FinancialAnalysis,
-    get_stock_data,
     create_stock_visualization,
     create_financial_visualization,
     generate_mock_data
@@ -151,11 +150,10 @@ def main():
                 else:
                     st.error(f"Error generating reports: {all_reports.get('error', 'Unknown error')}")
 
-        # Main content - Combined Analysis and Real-Time Data tabs
-        tab1, tab2 = st.tabs([
-            "📊 Comprehensive Analysis",
-            "📱 Real-Time Stock Data"
-        ])
+        # Main content - Analysis tab
+        tab1 = st.tabs([
+            "📊 Comprehensive Analysis"
+        ])[0]
 
         # Only show content in tabs if reports have been generated
         if 'all_reports' in locals() and all_reports.get('success', False):
@@ -196,46 +194,6 @@ def main():
                 st.write(all_reports['investment_recommendations']['report'])
                 st.divider()
                 display_evaluation_metrics(all_reports['investment_recommendations'].get('evaluation', {}))
-
-        with tab2:
-            st.header("Real-Time Stock Data")
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                ticker_symbol = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL for Apple)", "AAPL")
-            with col2:
-                period = st.selectbox(
-                    "Select Time Period",
-                    ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
-                    index=5  # Default to 1y
-                )
-            
-            if st.button("Fetch Stock Data", type="secondary", use_container_width=True):
-                with st.spinner("Fetching real-time stock data..."):
-                    try:
-                        stock_data = get_stock_data(ticker_symbol, period)
-                        
-                        if stock_data.get('success', False):
-                            display_stock_metrics(stock_data)
-                            
-                            # Display stock price chart
-                            fig = create_stock_visualization(
-                                stock_data['historical_data'],
-                                f"{ticker_symbol} Stock Price and Volume",
-                                "Date",
-                                "Price ($)"
-                            )
-                            st.pyplot(fig)
-                            
-                            # Display latest news
-                            st.subheader("Latest News")
-                            for news_item in stock_data.get('news', []):
-                                st.write(f"**{news_item['title']}**")
-                                st.write(f"Source: {news_item['publisher']} | {news_item['published']}")
-                                st.write("---")
-                        else:
-                            st.error("Failed to fetch stock data. Please try again.")
-                    except Exception as e:
-                        st.error(f"Error fetching stock data: {str(e)}")
 
     except Exception as e:
         st.error(f"Application error: {str(e)}")
