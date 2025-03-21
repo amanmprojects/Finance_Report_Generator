@@ -476,18 +476,18 @@ def parse_evaluation(evaluation_text: str, language: str = "English") -> Dict:
     # Language-specific patterns
     patterns = {
         "English": {
-            "score": r'(\d+)\. (\w+ Score) \(1-10\): (\d+)',
-            "improvements": r'\[IMPROVEMENT AREAS\](.*?)\[',
+            "score": r'(\d+)\. \*\*(\w+ Score)\*\* \(1-10\):',
+            "improvements": r'\[IMPROVEMENT AREAS\](.*?)(?=\[|$)',
             "improvement_split": "\n"
         },
         "Hindi": {
-            "score": r'(\d+)\. ([\u0900-\u097F\s]+ स्कोर) \(1-10\): (\d+)',
-            "improvements": r'\[सुधार के क्षेत्र\](.*?)\[',
+            "score": r'(\d+)\. ([\u0900-\u097F\s]+ स्कोर) \(1-10\):',
+            "improvements": r'\[सुधार के क्षेत्र\](.*?)(?=\[|$)',
             "improvement_split": "\n"
         },
         "Marathi": {
-            "score": r'(\d+)\. ([\u0900-\u097F\s]+ स्कोर) \(1-10\): (\d+)',
-            "improvements": r'\[सुधारणा क्षेत्रे\](.*?)\[',
+            "score": r'(\d+)\. ([\u0900-\u097F\s]+ स्कोर) \(1-10\):',
+            "improvements": r'\[सुधारणा क्षेत्रे\](.*?)(?=\[|$)',
             "improvement_split": "\n"
         }
     }
@@ -496,7 +496,12 @@ def parse_evaluation(evaluation_text: str, language: str = "English") -> Dict:
     
     # Extract scores
     for match in re.finditer(pattern["score"], evaluation_text):
-        scores[match.group(2)] = int(match.group(3))
+        score_name = match.group(2)
+        # Look for the score value after the match
+        score_text = evaluation_text[match.end():match.end()+10]
+        score_match = re.search(r'(\d+)', score_text)
+        if score_match:
+            scores[score_name] = int(score_match.group(1))
     
     # Extract improvements
     improvements_match = re.search(pattern["improvements"], evaluation_text, re.DOTALL)

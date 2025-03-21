@@ -11,23 +11,6 @@ from translated_prompts import LANGUAGES
 
 st.set_page_config(page_title="AI Financial Analysis", layout="wide")
 
-def display_evaluation_metrics(evaluation, language="English"):
-    """Display evaluation metrics in a structured format."""
-    try:
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader(LANGUAGES[language]["ui"]["quality_scores"])
-            for metric, score in evaluation.get('scores', {}).items():
-                st.metric(metric, f"{score}/10")    
-        
-        with col2:
-            st.subheader(LANGUAGES[language]["ui"]["improvement_areas"])
-            for improvement in evaluation.get('improvements', []):
-                st.write(f"• {improvement}")
-    except Exception as e:
-        st.error(f"{LANGUAGES[language]['ui']['error_displaying_metrics']}: {str(e)}")
-
 def display_stock_metrics(stock_data, language="English"):
     """Display stock metrics in a structured format."""
     try:
@@ -180,16 +163,17 @@ def main():
 
     # Only show content in tabs if reports have been generated
     if 'all_reports' in locals() and all_reports.get('success', False):
-        tab1 = st.tabs([
-            ui["comprehensive_analysis"]
-        ])[0]
+        tab1, tab2, tab3 = st.tabs([
+            ui["market_trends_analysis"],
+            ui["financial_projections"],
+            ui["investment_recommendations"]
+        ])
 
         with tab1:
             # Market Trends Section
             st.header(ui["market_trends_analysis"])
             st.write(all_reports['market_trends']['report'])
             st.divider()
-            display_evaluation_metrics(all_reports['market_trends'].get('evaluation', {}), selected_language)
             display_news_articles(all_reports['market_trends'].get('news_articles', []), selected_language)
             
             # Visualization for Market Trends
@@ -201,12 +185,12 @@ def main():
                 ui["price"]
             )
             st.pyplot(fig)
-            
+
+        with tab2:
             # Financial Projections Section
             st.header(ui["financial_projections"])
             st.write(all_reports['financial_projections']['report'])
             st.divider()
-            display_evaluation_metrics(all_reports['financial_projections'].get('evaluation', {}), selected_language)
             display_news_articles(all_reports['financial_projections'].get('news_articles', []), selected_language)
             
             # Visualization for Financial Projections
@@ -217,12 +201,12 @@ def main():
                 ui["amount"]
             )
             st.pyplot(fig)
-            
+
+        with tab3:
             # Investment Recommendations Section
             st.header(ui["investment_recommendations"])
             st.write(all_reports['investment_recommendations']['report'])
             st.divider()
-            display_evaluation_metrics(all_reports['investment_recommendations'].get('evaluation', {}), selected_language)
             display_news_articles(all_reports['investment_recommendations'].get('news_articles', []), selected_language)
 
 if __name__ == "__main__":
