@@ -10,4 +10,4 @@ response = client.chat.completions.create(
   model="deepseek-ai/DeepSeek-R1",
   messages=[{"role": "user", "content": "Hello, world!"}],
 )
-print(response)
+print(response.choices[0].message.content)

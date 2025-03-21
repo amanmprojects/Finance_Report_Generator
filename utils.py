@@ -46,6 +46,7 @@ def generate_completion(prompt_text: str) -> str:
             temperature=0.7,
             max_tokens=2000
         )
+        print(clean_model_output(response.choices[0].message.content))
         return clean_model_output(response.choices[0].message.content)
     except Exception as e:
         print(f"Error generating completion: {str(e)}")
