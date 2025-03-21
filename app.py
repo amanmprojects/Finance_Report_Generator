@@ -170,6 +170,21 @@ def main():
             value="Medium-term (3-5 years)"
         )
 
+        st.subheader("Model Settings")
+        selected_model = st.selectbox(
+            "Select Language Model",
+            [
+                "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+                "deepseek-ai/DeepSeek-R1",
+                "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+            ],
+            index=0  # Default to the first model
+        )
+        
+        # Update the MODEL_NAME in the environment
+        os.environ["MODEL_NAME"] = selected_model
+
     # Main content
     st.title(ui["title"])
     st.write(ui["powered_by"])

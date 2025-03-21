@@ -38,7 +38,7 @@ def generate_completion(prompt_text: str, language: str = "English") -> str:
     try:
         # First attempt with higher token limit
         response = client.chat.completions.create(
-            model=os.getenv("MODEL_NAME", "deepseek-ai/DeepSeek-R1"),
+            model=(os.environ["MODEL_NAME"] or "deepseek-ai/DeepSeek-R1"),
             messages=messages,
             temperature=0.7,
             max_tokens=100000  # Increased token limit
