@@ -55,6 +55,19 @@ def display_stock_metrics(stock_data, language="English"):
     except Exception as e:
         st.error(f"{LANGUAGES[language]['ui']['error_displaying_metrics']}: {str(e)}")
 
+def display_news_articles(news_articles, language="English"):
+    """Display news articles in a structured format."""
+    if not news_articles:
+        return
+    
+    st.subheader(LANGUAGES[language]["ui"]["news_title"])
+    for article in news_articles:
+        with st.expander(article['title']):
+            st.write(f"**{LANGUAGES[language]['ui']['news_publisher']}:** {article['source']}")
+            st.write(f"**{LANGUAGES[language]['ui']['news_date']}:** {article['published']}")
+            st.write(article['description'])
+            st.markdown(f"[{LANGUAGES[language]['ui']['news_link']}]({article['link']})")
+
 def generate_all_reports(financial_analyzer, company, industry, timeframe, risk_profile, investment_horizon):
     """Generate all reports at once."""
     reports = {}
@@ -177,6 +190,7 @@ def main():
             st.write(all_reports['market_trends']['report'])
             st.divider()
             display_evaluation_metrics(all_reports['market_trends'].get('evaluation', {}), selected_language)
+            display_news_articles(all_reports['market_trends'].get('news_articles', []), selected_language)
             
             # Visualization for Market Trends
             mock_data = generate_mock_data()
@@ -193,6 +207,7 @@ def main():
             st.write(all_reports['financial_projections']['report'])
             st.divider()
             display_evaluation_metrics(all_reports['financial_projections'].get('evaluation', {}), selected_language)
+            display_news_articles(all_reports['financial_projections'].get('news_articles', []), selected_language)
             
             # Visualization for Financial Projections
             fig = create_financial_visualization(
@@ -208,6 +223,7 @@ def main():
             st.write(all_reports['investment_recommendations']['report'])
             st.divider()
             display_evaluation_metrics(all_reports['investment_recommendations'].get('evaluation', {}), selected_language)
+            display_news_articles(all_reports['investment_recommendations'].get('news_articles', []), selected_language)
 
 if __name__ == "__main__":
     main() 

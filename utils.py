@@ -10,6 +10,7 @@ from datetime import datetime
 import json
 from typing import Dict, List, Union, Optional
 from translated_prompts import LANGUAGES
+from duckduckgo_service import DuckDuckGoNewsService
 
 load_dotenv()
 
@@ -322,6 +323,7 @@ class FinancialAnalysis:
     def __init__(self, language="English"):
         self.client = setup_client()
         self.language = language
+        self.news_service = DuckDuckGoNewsService()
         
     def evaluate_report(self, report: str, language: str = "English") -> Dict:
         """Evaluate the generated report using GPT."""
@@ -360,12 +362,18 @@ class FinancialAnalysis:
     
     def generate_market_analysis(self, company: str, industry: str, timeframe: str, market_cap: float = 100.0, geographic_focus: str = "North America, Europe") -> Dict:
         """Generate comprehensive market analysis with evaluation."""
+        # Fetch company news
+        news_articles = self.news_service.fetch_company_news(company, timeframe, self.language)
+        news_summary = self.news_service.format_news_for_prompt(news_articles)
+        
+        # Add news context to the prompt
         prompt = LANGUAGES[self.language]["market_trends"].format(
             company=company,
             industry=industry,
             timeframe=timeframe,
             market_cap=market_cap,
-            geographic_focus=geographic_focus
+            geographic_focus=geographic_focus,
+            news_context=news_summary
         )
         
         report = generate_completion(prompt, language=self.language)
@@ -374,17 +382,24 @@ class FinancialAnalysis:
         return {
             'report': report,
             'evaluation': evaluation,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'news_articles': news_articles
         }
     
     def generate_financial_forecast(self, company: str, timeframe: str, metrics: str) -> Dict:
         """Generate financial forecast with evaluation."""
+        # Fetch company news
+        news_articles = self.news_service.fetch_company_news(company, timeframe, self.language)
+        news_summary = self.news_service.format_news_for_prompt(news_articles)
+        
+        # Add news context to the prompt
         prompt = LANGUAGES[self.language]["financial_projections"].format(
             company=company,
             timeframe=timeframe,
             metrics=metrics,
             historical_range="5 years",  # Default value
-            confidence_level="95%"  # Default value
+            confidence_level="95%",  # Default value
+            news_context=news_summary
         )
         
         report = generate_completion(prompt, language=self.language)
@@ -393,17 +408,24 @@ class FinancialAnalysis:
         return {
             'report': report,
             'evaluation': evaluation,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'news_articles': news_articles
         }
     
     def generate_investment_advice(self, company: str, risk_profile: str, investment_horizon: str) -> Dict:
         """Generate investment recommendations with evaluation."""
+        # Fetch company news
+        news_articles = self.news_service.fetch_company_news(company, "1 year", self.language)  # Use 1 year for investment advice
+        news_summary = self.news_service.format_news_for_prompt(news_articles)
+        
+        # Add news context to the prompt
         prompt = LANGUAGES[self.language]["investment_recommendations"].format(
             company=company,
             risk_profile=risk_profile,
             investment_horizon=investment_horizon,
             portfolio_context="Balanced Portfolio",  # Default value
-            market_regime="Normal Market Conditions"  # Default value
+            market_regime="Normal Market Conditions",  # Default value
+            news_context=news_summary
         )
         
         report = generate_completion(prompt, language=self.language)
@@ -412,7 +434,8 @@ class FinancialAnalysis:
         return {
             'report': report,
             'evaluation': evaluation,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'news_articles': news_articles
         }
 
     def generate_response(self, system_context: str, user_message: str) -> str:
