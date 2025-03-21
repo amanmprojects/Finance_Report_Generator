@@ -62,8 +62,8 @@ def generate_all_reports(financial_analyzer, company, industry, timeframe, risk_
     """Generate all reports at once."""
     reports = {}
     
-    # Market Trends Analysis
     try:
+        # Market Trends Analysis
         market_cap = 100.0  # Default value
         geographic_focus = "North America, Europe"  # Default value
         
@@ -74,46 +74,26 @@ def generate_all_reports(financial_analyzer, company, industry, timeframe, risk_
             market_cap=market_cap,
             geographic_focus=geographic_focus
         )
-    except Exception as e:
-        reports['market_trends'] = {'error': str(e)}
 
-    # Financial Projections
-    try:
+        # Financial Projections
         metrics = "Revenue, EBITDA, Net Income, Operating Cash Flow"
-        historical_range = "5 years"  # Default historical range
-        confidence_level = 0.95  # Default confidence level
-        
         reports['financial_projections'] = financial_analyzer.generate_financial_forecast(
             company=company,
             timeframe=timeframe,
-            metrics=metrics,
-            historical_range=historical_range,
-            confidence_level=confidence_level
+            metrics=metrics
         )
-    except Exception as e:
-        reports['financial_projections'] = {'error': str(e)}
 
-    # Investment Recommendations
-    try:
-        # Create a default portfolio context
-        portfolio_context = {
-            "current_holdings": [],
-            "risk_tolerance": risk_profile.lower(),
-            "investment_goals": investment_horizon.split(" ")[0].lower(),
-            "market_outlook": "neutral"
-        }
-        
-        market_regime = "normal"  # Default market regime
-        
+        # Investment Recommendations
         reports['investment_recommendations'] = financial_analyzer.generate_investment_advice(
             company=company,
             risk_profile=risk_profile,
-            investment_horizon=investment_horizon,
-            portfolio_context=portfolio_context,
-            market_regime=market_regime
+            investment_horizon=investment_horizon
         )
+
+        reports['success'] = True
     except Exception as e:
-        reports['investment_recommendations'] = {'error': str(e)}
+        reports['success'] = False
+        reports['error'] = str(e)
 
     return reports
 
@@ -170,66 +150,58 @@ def main():
                         risk_profile,
                         investment_horizon
                     )
-                st.success("✅ Analysis complete! View results in the tabs below.")
+                if all_reports.get('success', False):
+                    st.success("✅ Analysis complete! View results below.")
+                else:
+                    st.error(f"Error generating reports: {all_reports.get('error', 'Unknown error')}")
 
-        # Main content
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "📈 Market Trends",
-            "📊 Financial Projections",
-            "💡 Investment Recommendations",
+        # Main content - Combined Analysis and Real-Time Data tabs
+        tab1, tab2 = st.tabs([
+            "📊 Comprehensive Analysis",
             "📱 Real-Time Stock Data"
         ])
 
         # Only show content in tabs if reports have been generated
-        if 'all_reports' in locals():
+        if 'all_reports' in locals() and all_reports.get('success', False):
             with tab1:
+                # Market Trends Section
                 st.header("Market Trends Analysis")
-                if 'error' in all_reports['market_trends']:
-                    st.error(f"Error in market trends analysis: {all_reports['market_trends']['error']}")
-                else:
-                    st.write(all_reports['market_trends']['report'])
-                    st.divider()
-                    display_evaluation_metrics(all_reports['market_trends'].get('evaluation', {}))
-                    
-                    # Visualization
-                    mock_data = generate_mock_data()
-                    fig = create_stock_visualization(
-                        mock_data['historical_data'],
-                        f"{company} Stock Price and Volume",
-                        "Date",
-                        "Price ($)"
-                    )
-                    st.pyplot(fig)
-
-            with tab2:
+                st.write(all_reports['market_trends']['report'])
+                st.divider()
+                display_evaluation_metrics(all_reports['market_trends'].get('evaluation', {}))
+                
+                # Visualization for Market Trends
+                mock_data = generate_mock_data()
+                fig = create_stock_visualization(
+                    mock_data['historical_data'],
+                    f"{company} Stock Price and Volume",
+                    "Date",
+                    "Price ($)"
+                )
+                st.pyplot(fig)
+                
+                # Financial Projections Section
                 st.header("Financial Projections")
-                if 'error' in all_reports['financial_projections']:
-                    st.error(f"Error in financial projections: {all_reports['financial_projections']['error']}")
-                else:
-                    st.write(all_reports['financial_projections']['report'])
-                    st.divider()
-                    display_evaluation_metrics(all_reports['financial_projections'].get('evaluation', {}))
-                    
-                    # Visualization
-                    mock_data = generate_mock_data()
-                    fig = create_financial_visualization(
-                        mock_data['financial_data'],
-                        f"{company} Financial Projections",
-                        "Date",
-                        "Amount ($)"
-                    )
-                    st.pyplot(fig)
-
-            with tab3:
+                st.write(all_reports['financial_projections']['report'])
+                st.divider()
+                display_evaluation_metrics(all_reports['financial_projections'].get('evaluation', {}))
+                
+                # Visualization for Financial Projections
+                fig = create_financial_visualization(
+                    mock_data['financial_data'],
+                    f"{company} Financial Projections",
+                    "Date",
+                    "Amount ($)"
+                )
+                st.pyplot(fig)
+                
+                # Investment Recommendations Section
                 st.header("Investment Recommendations")
-                if 'error' in all_reports['investment_recommendations']:
-                    st.error(f"Error in investment recommendations: {all_reports['investment_recommendations']['error']}")
-                else:
-                    st.write(all_reports['investment_recommendations']['report'])
-                    st.divider()
-                    display_evaluation_metrics(all_reports['investment_recommendations'].get('evaluation', {}))
+                st.write(all_reports['investment_recommendations']['report'])
+                st.divider()
+                display_evaluation_metrics(all_reports['investment_recommendations'].get('evaluation', {}))
 
-        with tab4:
+        with tab2:
             st.header("Real-Time Stock Data")
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -250,43 +222,25 @@ def main():
                             display_stock_metrics(stock_data)
                             
                             # Display stock price chart
-                            if 'historical_data' in stock_data:
-                                fig = create_stock_visualization(
-                                    stock_data['historical_data'],
-                                    f"{ticker_symbol} Stock Price",
-                                    "Date",
-                                    "Price ($)"
-                                )
-                                st.pyplot(fig)
+                            fig = create_stock_visualization(
+                                stock_data['historical_data'],
+                                f"{ticker_symbol} Stock Price and Volume",
+                                "Date",
+                                "Price ($)"
+                            )
+                            st.pyplot(fig)
                             
-                            # Display recent news
-                            st.subheader("Recent News")
+                            # Display latest news
+                            st.subheader("Latest News")
                             for news_item in stock_data.get('news', []):
-                                with st.container():
-                                    st.markdown(f"**{news_item['title']}**")
-                                    st.markdown(f"*{news_item['publisher']} - {news_item['link']}*")
-                                    st.markdown("---")
+                                st.write(f"**{news_item['title']}**")
+                                st.write(f"Source: {news_item['publisher']} | {news_item['published']}")
+                                st.write("---")
                         else:
-                            st.error(f"Error fetching stock data: {stock_data.get('error', 'Unknown error')}")
+                            st.error("Failed to fetch stock data. Please try again.")
                     except Exception as e:
-                        st.error(f"Error processing stock data: {str(e)}")
+                        st.error(f"Error fetching stock data: {str(e)}")
 
-        # Model Information
-        st.sidebar.markdown("---")
-        st.sidebar.header("ℹ️ Model Information")
-        st.sidebar.markdown("""
-        This financial analysis tool uses advanced AI to provide:
-        - 📈 Market trend analysis
-        - 📊 Financial projections
-        - 💡 Investment recommendations
-        - 📱 Real-time stock data analysis
-        
-        Each report is evaluated for:
-        - ✓ Accuracy
-        - ✓ Completeness
-        - ✓ Actionability
-        - ✓ Clarity
-        """)
     except Exception as e:
         st.error(f"Application error: {str(e)}")
 
