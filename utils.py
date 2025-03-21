@@ -2,13 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openai
 from langchain.chains import LLMChain
-from prompts import (
-    SYSTEM_CONTEXT,
-    MARKET_TRENDS_PROMPT,
-    FINANCIAL_PROJECTIONS_PROMPT,
-    INVESTMENT_RECOMMENDATIONS_PROMPT,
-    EVALUATION_TEMPLATE
-)
 import os
 from dotenv import load_dotenv
 import pandas as pd
@@ -30,12 +23,13 @@ def setup_client():
         base_url="https://api.together.xyz/v1",
     )
 
-def generate_completion(prompt_text: str) -> str:
+def generate_completion(prompt_text: str, language: str = "English") -> str:
     """Generate completion using Together AI via OpenAI SDK."""
+    from translated_prompts import LANGUAGES
     client = setup_client()
     
     messages = [
-        {"role": "system", "content": SYSTEM_CONTEXT},
+        {"role": "system", "content": LANGUAGES[language]["system_context"]},
         {"role": "user", "content": prompt_text}
     ]
     
@@ -45,7 +39,7 @@ def generate_completion(prompt_text: str) -> str:
             model=os.getenv("MODEL_NAME", "deepseek-ai/DeepSeek-R1"),
             messages=messages,
             temperature=0.7,
-            max_tokens=10000  # Increased token limit
+            max_tokens=100000  # Increased token limit
         )
         
         content = response.choices[0].message.content
@@ -286,18 +280,22 @@ class FinancialAnalysis:
         self.client = setup_client()
         self.language = language
         
-    def evaluate_report(self, report: str) -> Dict:
-        """Evaluate the quality of a generated report."""
-        evaluation_prompt = f"""Please evaluate the following financial report according to the template:
-
-Report:
-{report}
-
-Template:
-{EVALUATION_TEMPLATE}"""
+    def evaluate_report(self, report: str, language: str = "English") -> Dict:
+        """Evaluate the generated report using GPT."""
+        from translated_prompts import LANGUAGES
         
-        evaluation_response = generate_completion(evaluation_prompt)
-        return parse_evaluation(evaluation_response)
+        # Get language-specific evaluation template
+        evaluation_template = LANGUAGES[language]["evaluation_template"]
+        system_context = LANGUAGES[language]["system_context"]
+        
+        # Generate evaluation response
+        evaluation_response = self.generate_response(
+            system_context=system_context,
+            user_message=f"{evaluation_template}\n\nReport to evaluate:\n{report}"
+        )
+        
+        # Parse evaluation response
+        return parse_evaluation(evaluation_response, language)
     
     def validate_financial_data(self, data: Dict) -> bool:
         """Validate financial data for consistency and completeness."""
@@ -331,8 +329,8 @@ Template:
             geographic_focus=geographic_focus
         )
         
-        report = generate_completion(prompt)
-        evaluation = self.evaluate_report(report)
+        report = generate_completion(prompt, language=self.language)
+        evaluation = self.evaluate_report(report, language=self.language)
         
         return {
             'report': report,
@@ -352,8 +350,8 @@ Template:
             confidence_level="95%"  # Default value
         )
         
-        report = generate_completion(prompt)
-        evaluation = self.evaluate_report(report)
+        report = generate_completion(prompt, language=self.language)
+        evaluation = self.evaluate_report(report, language=self.language)
         
         return {
             'report': report,
@@ -373,8 +371,8 @@ Template:
             market_regime="Normal Market Conditions"  # Default value
         )
         
-        report = generate_completion(prompt)
-        evaluation = self.evaluate_report(report)
+        report = generate_completion(prompt, language=self.language)
+        evaluation = self.evaluate_report(report, language=self.language)
         
         return {
             'report': report,
@@ -382,31 +380,75 @@ Template:
             'timestamp': datetime.now().isoformat()
         }
 
-def parse_evaluation(evaluation_text: str) -> Dict:
+    def generate_response(self, system_context: str, user_message: str) -> str:
+        """Generate a response using the language model."""
+        client = setup_client()
+        
+        messages = [
+            {"role": "system", "content": system_context},
+            {"role": "user", "content": user_message}
+        ]
+        
+        try:
+            response = client.chat.completions.create(
+                model=os.getenv("MODEL_NAME", "deepseek-ai/DeepSeek-R1"),
+                messages=messages,
+                temperature=0.7,
+                max_tokens=10000
+            )
+            
+            content = response.choices[0].message.content
+            
+            if response.choices[0].finish_reason == "length":
+                print("Warning: Response was truncated due to length limits")
+            
+            return clean_model_output(content)
+            
+        except Exception as e:
+            print(f"Error generating response: {str(e)}")
+            return f"Error generating response: {str(e)}"
+
+def parse_evaluation(evaluation_text: str, language: str = "English") -> Dict:
     """Parse evaluation response into structured format."""
+    from translated_prompts import LANGUAGES
+    
     scores = {}
     improvements = []
-    checklist = {}
+    
+    # Language-specific patterns
+    patterns = {
+        "English": {
+            "score": r'(\d+)\. (\w+ Score) \(1-10\): (\d+)',
+            "improvements": r'\[IMPROVEMENT AREAS\](.*?)\[',
+            "improvement_split": "\n"
+        },
+        "Hindi": {
+            "score": r'(\d+)\. ([\u0900-\u097F\s]+ स्कोर) \(1-10\): (\d+)',
+            "improvements": r'\[सुधार के क्षेत्र\](.*?)\[',
+            "improvement_split": "\n"
+        },
+        "Marathi": {
+            "score": r'(\d+)\. ([\u0900-\u097F\s]+ स्कोर) \(1-10\): (\d+)',
+            "improvements": r'\[सुधारणा क्षेत्रे\](.*?)\[',
+            "improvement_split": "\n"
+        }
+    }
+    
+    pattern = patterns.get(language, patterns["English"])
     
     # Extract scores
-    score_pattern = r'(\d+)\. (\w+ Score) \(1-10\): (\d+)'
-    for match in re.finditer(score_pattern, evaluation_text):
+    for match in re.finditer(pattern["score"], evaluation_text):
         scores[match.group(2)] = int(match.group(3))
     
     # Extract improvements
-    improvements_pattern = r'\[IMPROVEMENT AREAS\](.*?)\[VERIFICATION CHECKLIST\]'
-    improvements_match = re.search(improvements_pattern, evaluation_text, re.DOTALL)
+    improvements_match = re.search(pattern["improvements"], evaluation_text, re.DOTALL)
     if improvements_match:
-        improvements = [imp.strip() for imp in improvements_match.group(1).split('\n') if imp.strip()]
-    
-    # Extract checklist items
-    checklist_pattern = r'□ (.*?)(?=□|\Z)'
-    for match in re.finditer(checklist_pattern, evaluation_text, re.DOTALL):
-        item = match.group(1).strip()
-        checklist[item] = True
+        improvements = [
+            imp.strip() for imp in improvements_match.group(1).split(pattern["improvement_split"])
+            if imp.strip() and not imp.strip().isdigit()
+        ]
     
     return {
         'scores': scores,
-        'improvements': improvements,
-        'checklist': checklist
+        'improvements': improvements
     } 
