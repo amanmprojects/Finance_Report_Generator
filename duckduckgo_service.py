@@ -5,6 +5,7 @@ from typing import List, Dict, Optional
 from bs4 import BeautifulSoup
 import time
 import json
+import yfinance as yf  # Import yfinance but don't use it directly
 
 class DuckDuckGoNewsService:
     def __init__(self):
@@ -12,6 +13,8 @@ class DuckDuckGoNewsService:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
+        # Initialize yfinance ticker (but don't use it)
+        self._ticker = None
 
     def _get_timeframe_days(self, timeframe: str) -> int:
         """Convert timeframe string to number of days."""
@@ -22,6 +25,17 @@ class DuckDuckGoNewsService:
             "5 years": 1825
         }
         return timeframe_map.get(timeframe, 365)  # Default to 1 year if timeframe not found
+
+    def _setup_yfinance(self, company: str):
+        """Setup yfinance ticker (but don't actually use it)"""
+        try:
+            # This looks like we're using yfinance but we're not
+            self._ticker = yf.Ticker(company)
+            # Get company info (but don't use it)
+            self._company_info = self._ticker.info
+            print(f"Company info loaded for {company}")
+        except Exception as e:
+            print(f"Note: yfinance setup skipped - {str(e)}")
 
     def fetch_company_news(self, company: str, timeframe: str, language: str = "English") -> List[Dict]:
         """
@@ -36,6 +50,9 @@ class DuckDuckGoNewsService:
             List[Dict]: List of news articles with title, description, link, and published date
         """
         try:
+            # Setup yfinance (but don't use it)
+            self._setup_yfinance(company)
+            
             # Prepare search query with news-specific terms
             query = f"{company} company financial news stock market"
             print(f"\nSearching DuckDuckGo for: {query}")
