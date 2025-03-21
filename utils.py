@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 import json
 from typing import Dict, List, Union, Optional
+from translated_prompts import LANGUAGES
 
 load_dotenv()
 
@@ -25,7 +26,6 @@ def setup_client():
 
 def generate_completion(prompt_text: str, language: str = "English") -> str:
     """Generate completion using Together AI via OpenAI SDK."""
-    from translated_prompts import LANGUAGES
     client = setup_client()
     
     messages = [
@@ -146,28 +146,71 @@ def generate_mock_data():
         'success': True
     }
 
-def generate_mock_news():
+def generate_mock_news(language: str = "English"):
     """Generate mock news data."""
-    return [
-        {
-            'title': 'Company Reports Strong Q1 Results',
-            'publisher': 'Financial Times',
-            'link': '#',
-            'published': datetime.now().isoformat()
-        },
-        {
-            'title': 'New Product Launch Expected Next Quarter',
-            'publisher': 'Business Insider',
-            'link': '#',
-            'published': datetime.now().isoformat()
-        },
-        {
-            'title': 'Market Analysis: Industry Trends',
-            'publisher': 'Reuters',
-            'link': '#',
-            'published': datetime.now().isoformat()
-        }
-    ]
+    news_templates = {
+        "English": [
+            {
+                'title': 'Company Reports Strong Q1 Results',
+                'publisher': 'Financial Times',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            },
+            {
+                'title': 'New Product Launch Expected Next Quarter',
+                'publisher': 'Business Insider',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            },
+            {
+                'title': 'Market Analysis: Industry Trends',
+                'publisher': 'Reuters',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            }
+        ],
+        "Hindi": [
+            {
+                'title': 'कंपनी ने मजबूत Q1 परिणाम दर्ज किए',
+                'publisher': 'फाइनेंशियल टाइम्स',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            },
+            {
+                'title': 'अगली तिमाही में नए उत्पाद लॉन्च की उम्मीद',
+                'publisher': 'बिजनेस इनसाइडर',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            },
+            {
+                'title': 'बाजार विश्लेषण: उद्योग रुझान',
+                'publisher': 'रॉयटर्स',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            }
+        ],
+        "Marathi": [
+            {
+                'title': 'कंपनीने मजबूत Q1 निकाल दर्ज केला',
+                'publisher': 'फायनान्शियल टाइम्स',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            },
+            {
+                'title': 'पुढील तिमाहीत नवीन उत्पादन लॉन्चची अपेक्षा',
+                'publisher': 'बिझनेस इनसाइडर',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            },
+            {
+                'title': 'बाजार विश्लेषण: उद्योग रुझाने',
+                'publisher': 'रॉयटर्स',
+                'link': '#',
+                'published': datetime.now().isoformat()
+            }
+        ]
+    }
+    return news_templates.get(language, news_templates["English"])
 
 def get_stock_data(ticker_symbol: str, period: str = "1y") -> Dict:
     """Get mock stock data instead of real-time data."""
@@ -205,7 +248,7 @@ def calculate_stock_metrics(historical_data: pd.DataFrame) -> Dict:
     
     return metrics
 
-def create_stock_visualization(data: pd.DataFrame, title: str, xlabel: str = "Date", ylabel: str = "Price") -> plt.Figure:
+def create_stock_visualization(data: pd.DataFrame, title: str, xlabel: str = "Date", ylabel: str = "Price", language: str = "English") -> plt.Figure:
     """Create enhanced stock visualization with technical indicators."""
     try:
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), height_ratios=[3, 1])
@@ -217,13 +260,13 @@ def create_stock_visualization(data: pd.DataFrame, title: str, xlabel: str = "Da
             raise ValueError("Data must contain 'Close' column")
         
         # Plot price and moving averages
-        ax1.plot(data.index, data['Close'], label='Close Price')
+        ax1.plot(data.index, data['Close'], label=LANGUAGES[language]["ui"]["close_price"])
         
         # Only add moving averages if we have enough data points
         if len(data) >= 50:
-            ax1.plot(data.index, data['Close'].rolling(window=50).mean(), label='50-day MA')
+            ax1.plot(data.index, data['Close'].rolling(window=50).mean(), label=LANGUAGES[language]["ui"]["sma_50"])
         if len(data) >= 200:
-            ax1.plot(data.index, data['Close'].rolling(window=200).mean(), label='200-day MA')
+            ax1.plot(data.index, data['Close'].rolling(window=200).mean(), label=LANGUAGES[language]["ui"]["sma_200"])
         
         ax1.set_title(title)
         ax1.set_ylabel(ylabel)
@@ -236,7 +279,7 @@ def create_stock_visualization(data: pd.DataFrame, title: str, xlabel: str = "Da
             colors = ['green' if pc >= 0 else 'red' for pc in price_change]
             ax2.bar(data.index, data['Volume'], color=colors, alpha=0.5)
             ax2.set_xlabel(xlabel)
-            ax2.set_ylabel('Volume')
+            ax2.set_ylabel(LANGUAGES[language]["ui"]["volume"])
             ax2.grid(True)
         
         plt.tight_layout()
@@ -245,12 +288,12 @@ def create_stock_visualization(data: pd.DataFrame, title: str, xlabel: str = "Da
         print(f"Error in visualization: {str(e)}")
         # Create a simple error figure
         fig, ax = plt.subplots(figsize=(12, 6))
-        ax.text(0.5, 0.5, f"Error creating visualization: {str(e)}", 
+        ax.text(0.5, 0.5, f"{LANGUAGES[language]['ui']['error_visualization']}: {str(e)}", 
                 ha='center', va='center')
         ax.axis('off')
         return fig
 
-def create_financial_visualization(data: pd.DataFrame, title: str, xlabel: str = "Date", ylabel: str = "Amount ($)") -> plt.Figure:
+def create_financial_visualization(data: pd.DataFrame, title: str, xlabel: str = "Date", ylabel: str = "Amount ($)", language: str = "English") -> plt.Figure:
     """Create visualization for financial projections."""
     try:
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -270,7 +313,7 @@ def create_financial_visualization(data: pd.DataFrame, title: str, xlabel: str =
         print(f"Error in financial visualization: {str(e)}")
         # Create a simple error figure
         fig, ax = plt.subplots(figsize=(12, 6))
-        ax.text(0.5, 0.5, f"Error creating visualization: {str(e)}", 
+        ax.text(0.5, 0.5, f"{LANGUAGES[language]['ui']['error_visualization']}: {str(e)}", 
                 ha='center', va='center')
         ax.axis('off')
         return fig
@@ -282,8 +325,6 @@ class FinancialAnalysis:
         
     def evaluate_report(self, report: str, language: str = "English") -> Dict:
         """Evaluate the generated report using GPT."""
-        from translated_prompts import LANGUAGES
-        
         # Get language-specific evaluation template
         evaluation_template = LANGUAGES[language]["evaluation_template"]
         system_context = LANGUAGES[language]["system_context"]
@@ -319,8 +360,6 @@ class FinancialAnalysis:
     
     def generate_market_analysis(self, company: str, industry: str, timeframe: str, market_cap: float = 100.0, geographic_focus: str = "North America, Europe") -> Dict:
         """Generate comprehensive market analysis with evaluation."""
-        from translated_prompts import LANGUAGES
-        
         prompt = LANGUAGES[self.language]["market_trends"].format(
             company=company,
             industry=industry,
@@ -340,8 +379,6 @@ class FinancialAnalysis:
     
     def generate_financial_forecast(self, company: str, timeframe: str, metrics: str) -> Dict:
         """Generate financial forecast with evaluation."""
-        from translated_prompts import LANGUAGES
-        
         prompt = LANGUAGES[self.language]["financial_projections"].format(
             company=company,
             timeframe=timeframe,
@@ -361,8 +398,6 @@ class FinancialAnalysis:
     
     def generate_investment_advice(self, company: str, risk_profile: str, investment_horizon: str) -> Dict:
         """Generate investment recommendations with evaluation."""
-        from translated_prompts import LANGUAGES
-        
         prompt = LANGUAGES[self.language]["investment_recommendations"].format(
             company=company,
             risk_profile=risk_profile,
