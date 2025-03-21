@@ -1,162 +1,209 @@
-SYSTEM_CONTEXT = """You are an expert financial analyst AI with deep knowledge of market analysis, financial forecasting, and investment strategies. 
-Provide detailed, data-driven analysis with specific metrics and actionable insights."""
+SYSTEM_CONTEXT = """You are an elite financial analyst AI with expertise in quantitative finance, behavioral economics, and advanced market microstructure analysis. 
+Your analysis incorporates cutting-edge methodologies including machine learning models, Monte Carlo simulations, and real-time market sentiment analysis.
+You provide institutional-grade insights backed by rigorous statistical validation and cross-market correlation analysis."""
 
 MARKET_TRENDS_PROMPT = """[CONTEXT]
 Company: {company}
 Industry: {industry}
 Timeframe: {timeframe}
+Market Cap: {market_cap}
+Geographic Focus: {geographic_focus}
 
 [TASK]
-Generate a comprehensive market trends analysis report with the following sections:
+Generate a comprehensive market trends analysis report incorporating advanced analytical frameworks:
 
 1. Executive Summary
-   - Key findings and recommendations (2-3 bullet points)
-   - Overall market sentiment
+   - Strategic inflection points
+   - Alpha generation opportunities
+   - Risk-adjusted return potential
+   - Market regime classification
 
 2. Industry Analysis
-   - Market size and growth rate
-   - Key market drivers
-   - Competitive landscape (top 3-5 competitors)
-   - Market share analysis
+   - Total Addressable Market (TAM) analysis
+   - Market penetration rates by segment
+   - Industry concentration metrics (HHI)
+   - Value chain analysis and margin distribution
+   - Regulatory environment and compliance landscape
 
 3. Growth Opportunities & Risks
-   - SWOT analysis
-   - Emerging trends
-   - Potential disruptions
-   - Regulatory impacts
+   - Porter's Five Forces analysis
+   - Blue Ocean Strategy evaluation
+   - Disruption potential assessment
+   - ESG impact analysis
+   - Geopolitical risk assessment
+   - Supply chain resilience metrics
 
 4. Key Performance Metrics
-   - Industry-specific KPIs
-   - Benchmark comparisons
-   - Growth metrics
+   - Industry-specific KPIs with peer benchmarking
+   - Growth quality metrics (organic vs inorganic)
+   - Return on Invested Capital (ROIC) analysis
+   - Customer acquisition cost (CAC) trends
+   - Lifetime value (LTV) analysis
+   - Network effect quantification
 
 5. Future Outlook
-   - Market predictions
-   - Technology trends
-   - Strategic recommendations
+   - Scenario planning with probability weights
+   - Technology adoption curves
+   - Market structure evolution
+   - Strategic optionality analysis
+   - M&A landscape assessment
 
 [OUTPUT FORMAT]
-- Use clear section headers
-- Include specific numbers and percentages
-- Provide data sources where applicable
-- List actionable recommendations
-- Keep total length to 1000-1500 words
+- Executive-level presentation style
+- Data visualization recommendations
+- Statistical significance indicators
+- Confidence intervals for projections
+- Cross-reference to industry databases
+- Actionable strategic initiatives
 
 [EVALUATION CRITERIA]
-- Factual accuracy
-- Data-driven insights
-- Actionable recommendations
-- Industry-specific relevance
-- Clear structure and readability"""
+- Quantitative rigor
+- Strategic depth
+- Forward-looking insights
+- Risk-adjusted perspective
+- Implementation feasibility"""
 
 FINANCIAL_PROJECTIONS_PROMPT = """[CONTEXT]
 Company: {company}
 Timeframe: {timeframe}
 Metrics to analyze: {metrics}
+Historical Data Range: {historical_range}
+Confidence Level: {confidence_level}
 
 [TASK]
-Generate detailed financial projections with the following components:
+Generate comprehensive financial projections using advanced modeling techniques:
 
 1. Financial Summary
-   - Key projections overview
-   - Assumptions and methodology
+   - Key value drivers identification
+   - Monte Carlo simulation results
+   - Scenario-based projections
+   - Sensitivity analysis matrix
 
 2. Revenue Analysis
-   - Growth rate projections
-   - Revenue streams breakdown
-   - Market size and penetration
+   - Revenue growth decomposition
+   - Customer cohort analysis
+   - Pricing power assessment
+   - Market share trajectory
+   - Geographic expansion impact
 
 3. Profitability Metrics
-   - Gross margin trends
-   - EBITDA projections
-   - Net profit margins
+   - Margin expansion levers
+   - Operating leverage analysis
+   - Cost structure optimization
+   - Working capital efficiency
+   - Asset utilization metrics
 
 4. Cash Flow Analysis
-   - Operating cash flow
-   - Investment requirements
-   - Working capital needs
+   - Free cash flow projections
+   - Capital expenditure optimization
+   - Working capital requirements
+   - Debt service capacity
+   - Dividend sustainability
 
 5. Risk Assessment
-   - Sensitivity analysis
-   - Key risk factors
-   - Mitigation strategies
+   - Value at Risk (VaR) analysis
+   - Stress testing scenarios
+   - Correlation risk assessment
+   - Liquidity risk metrics
+   - Counterparty risk evaluation
 
 [OUTPUT FORMAT]
-- Use tables for numerical data
-- Include growth rates and percentages
-- Provide confidence intervals
-- List all assumptions clearly
-- Include quarterly breakdowns
+- Financial model specifications
+- Key assumption documentation
+- Statistical validation methods
+- Risk-adjusted projections
+- Quarterly and annual breakdowns
+- Variance analysis framework
 
 [EVALUATION CRITERIA]
-- Mathematical accuracy
-- Realistic assumptions
-- Comprehensive coverage
-- Clear methodology
-- Risk consideration"""
+- Model sophistication
+- Assumption robustness
+- Risk quantification
+- Scenario coverage
+- Implementation guidance"""
 
 INVESTMENT_RECOMMENDATIONS_PROMPT = """[CONTEXT]
 Company: {company}
 Risk Profile: {risk_profile}
 Investment Horizon: {investment_horizon}
+Portfolio Context: {portfolio_context}
+Market Regime: {market_regime}
 
 [TASK]
-Provide comprehensive investment recommendations including:
+Provide institutional-grade investment recommendations incorporating advanced portfolio theory:
 
 1. Investment Summary
-   - Key recommendation
-   - Risk-reward profile
-   - Investment timeline
+   - Alpha generation strategy
+   - Risk-adjusted return profile
+   - Portfolio optimization impact
+   - Market timing considerations
+   - Position sizing methodology
 
 2. Valuation Analysis
-   - Current valuation metrics
-   - Fair value estimation
-   - Comparable analysis
+   - Multi-factor valuation model
+   - DCF with real options
+   - Relative valuation matrix
+   - Sum-of-the-parts analysis
+   - Intrinsic value calculation
 
 3. Entry Strategy
-   - Recommended entry points
-   - Position sizing
-   - Timing considerations
+   - Technical analysis integration
+   - Market microstructure analysis
+   - Liquidity assessment
+   - Transaction cost analysis
+   - Implementation timing
 
 4. Risk Management
-   - Stop-loss levels
-   - Position monitoring
-   - Diversification strategy
+   - Position sizing optimization
+   - Stop-loss methodology
+   - Portfolio correlation analysis
+   - Hedging strategy design
+   - Risk attribution framework
 
 5. Exit Strategy
-   - Target prices
-   - Exit triggers
-   - Rebalancing criteria
+   - Multiple scenario analysis
+   - Technical exit triggers
+   - Fundamental exit criteria
+   - Portfolio rebalancing rules
+   - Tax optimization considerations
 
 [OUTPUT FORMAT]
-- Clear buy/hold/sell recommendation
-- Specific price targets
-- Risk management rules
-- Timeline for actions
-- Portfolio allocation percentages
+- Investment thesis documentation
+- Risk management framework
+- Position sizing calculator
+- Monitoring dashboard
+- Performance attribution model
 
 [EVALUATION CRITERIA]
-- Risk-reward alignment
-- Strategy clarity
-- Practical implementation
-- Time horizon alignment
-- Risk management robustness"""
+- Strategy sophistication
+- Risk management robustness
+- Implementation clarity
+- Portfolio integration
+- Performance tracking framework"""
 
 EVALUATION_TEMPLATE = """[REPORT EVALUATION]
-1. Accuracy Score (1-10):
-2. Completeness Score (1-10):
-3. Actionability Score (1-10):
-4. Clarity Score (1-10):
-5. Overall Quality Score (1-10):
+1. Analytical Rigor Score (1-10):
+2. Strategic Depth Score (1-10):
+3. Implementation Feasibility Score (1-10):
+4. Risk Management Score (1-10):
+5. Innovation Score (1-10):
+6. Overall Excellence Score (1-10):
 
 [IMPROVEMENT AREAS]
-1.
-2.
-3.
+1. Quantitative Enhancement Opportunities
+2. Strategic Framework Refinements
+3. Risk Management Optimizations
+4. Implementation Efficiencies
+5. Innovation Integration Points
 
 [VERIFICATION CHECKLIST]
-□ Contains specific metrics and numbers
-□ Includes actionable recommendations
-□ Follows required format
-□ Addresses all key sections
-□ Provides clear conclusions""" 
+□ Advanced Analytical Framework Implementation
+□ Comprehensive Risk Assessment
+□ Clear Strategic Recommendations
+□ Robust Implementation Plan
+□ Performance Tracking Framework
+□ Innovation Integration
+□ Cross-market Correlation Analysis
+□ Statistical Validation
+□ ESG Considerations
+□ Geopolitical Risk Assessment""" 

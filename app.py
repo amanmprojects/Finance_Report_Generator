@@ -4,6 +4,7 @@ from utils import (
     FinancialAnalysis,
     get_stock_data,
     create_stock_visualization,
+    create_financial_visualization,
     generate_mock_data
 )
 
@@ -57,6 +58,65 @@ def display_stock_metrics(stock_data):
     except Exception as e:
         st.error(f"Error displaying stock metrics: {str(e)}")
 
+def generate_all_reports(financial_analyzer, company, industry, timeframe, risk_profile, investment_horizon):
+    """Generate all reports at once."""
+    reports = {}
+    
+    # Market Trends Analysis
+    try:
+        market_cap = 100.0  # Default value
+        geographic_focus = "North America, Europe"  # Default value
+        
+        reports['market_trends'] = financial_analyzer.generate_market_analysis(
+            company=company,
+            industry=industry,
+            timeframe=timeframe,
+            market_cap=market_cap,
+            geographic_focus=geographic_focus
+        )
+    except Exception as e:
+        reports['market_trends'] = {'error': str(e)}
+
+    # Financial Projections
+    try:
+        metrics = "Revenue, EBITDA, Net Income, Operating Cash Flow"
+        historical_range = "5 years"  # Default historical range
+        confidence_level = 0.95  # Default confidence level
+        
+        reports['financial_projections'] = financial_analyzer.generate_financial_forecast(
+            company=company,
+            timeframe=timeframe,
+            metrics=metrics,
+            historical_range=historical_range,
+            confidence_level=confidence_level
+        )
+    except Exception as e:
+        reports['financial_projections'] = {'error': str(e)}
+
+    # Investment Recommendations
+    try:
+        # Create a default portfolio context
+        portfolio_context = {
+            "current_holdings": [],
+            "risk_tolerance": risk_profile.lower(),
+            "investment_goals": investment_horizon.split(" ")[0].lower(),
+            "market_outlook": "neutral"
+        }
+        
+        market_regime = "normal"  # Default market regime
+        
+        reports['investment_recommendations'] = financial_analyzer.generate_investment_advice(
+            company=company,
+            risk_profile=risk_profile,
+            investment_horizon=investment_horizon,
+            portfolio_context=portfolio_context,
+            market_regime=market_regime
+        )
+    except Exception as e:
+        reports['investment_recommendations'] = {'error': str(e)}
+
+    return reports
+
 def main():
     st.title("AI-Generated Financial Forecasting and Analysis Report")
     st.write("Powered by Together AI's DeepSeek-R1 model")
@@ -66,124 +126,122 @@ def main():
         financial_analyzer = FinancialAnalysis()
 
         # Sidebar inputs
-        st.sidebar.header("Input Parameters")
-        company = st.sidebar.text_input("Company Name", "Example Corp")
-        industry = st.sidebar.selectbox(
-            "Industry",
-            ["Technology", "Healthcare", "Finance", "Retail", "Manufacturing"]
-        )
-        timeframe = st.sidebar.selectbox(
-            "Analysis Timeframe",
-            ["6 months", "1 year", "2 years", "5 years"]
-        )
-        risk_profile = st.sidebar.selectbox(
-            "Risk Profile",
-            ["Conservative", "Moderate", "Aggressive"]
-        )
-        investment_horizon = st.sidebar.selectbox(
-            "Investment Horizon",
-            ["Short-term (1-2 years)", "Medium-term (3-5 years)", "Long-term (5+ years)"]
-        )
+        with st.sidebar:
+            st.header("Input Parameters")
+            
+            # Company Information
+            st.subheader("Company Information")
+            company = st.text_input("Company Name", "Apple")
+            industry = st.selectbox(
+                "Industry",
+                ["Technology", "Healthcare", "Finance", "Retail", "Manufacturing"]
+            )
+            
+            # Analysis Parameters
+            st.subheader("Analysis Parameters")
+            timeframe = st.selectbox(
+                "Analysis Timeframe",
+                ["6 months", "1 year", "2 years", "5 years"]
+            )
+            
+            # Investment Profile
+            st.subheader("Investment Profile")
+            risk_profile = st.select_slider(
+                "Risk Profile",
+                options=["Conservative", "Moderate", "Aggressive"],
+                value="Moderate"
+            )
+            investment_horizon = st.select_slider(
+                "Investment Horizon",
+                options=["Short-term (1-2 years)", "Medium-term (3-5 years)", "Long-term (5+ years)"],
+                value="Medium-term (3-5 years)"
+            )
+
+        # Generate All Reports Button - Centered and prominent
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Generate Complete Analysis Report", type="primary", use_container_width=True):
+                with st.spinner("🔄 Generating comprehensive analysis report..."):
+                    all_reports = generate_all_reports(
+                        financial_analyzer,
+                        company,
+                        industry,
+                        timeframe,
+                        risk_profile,
+                        investment_horizon
+                    )
+                st.success("✅ Analysis complete! View results in the tabs below.")
 
         # Main content
         tab1, tab2, tab3, tab4 = st.tabs([
-            "Market Trends",
-            "Financial Projections",
-            "Investment Recommendations",
-            "Real-Time Stock Data"
+            "📈 Market Trends",
+            "📊 Financial Projections",
+            "💡 Investment Recommendations",
+            "📱 Real-Time Stock Data"
         ])
 
-        with tab1:
-            st.header("Market Trends Analysis")
-            if st.button("Generate Market Trends Report"):
-                with st.spinner("Generating market trends report..."):
-                    try:
-                        analysis = financial_analyzer.generate_market_analysis(
-                            company=company,
-                            industry=industry,
-                            timeframe=timeframe
-                        )
-                        
-                        if analysis.get('report'):
-                            st.write(analysis['report'])
-                            st.divider()
-                            display_evaluation_metrics(analysis.get('evaluation', {}))
-                            
-                            # Visualization
-                            mock_data = generate_mock_data()
-                            fig = create_stock_visualization(
-                                mock_data['revenue'],
-                                f"{company} Revenue Trend",
-                                "Date",
-                                "Revenue ($)"
-                            )
-                            st.pyplot(fig)
-                        else:
-                            st.error("Failed to generate market trends report")
-                    except Exception as e:
-                        st.error(f"Error in market trends analysis: {str(e)}")
+        # Only show content in tabs if reports have been generated
+        if 'all_reports' in locals():
+            with tab1:
+                st.header("Market Trends Analysis")
+                if 'error' in all_reports['market_trends']:
+                    st.error(f"Error in market trends analysis: {all_reports['market_trends']['error']}")
+                else:
+                    st.write(all_reports['market_trends']['report'])
+                    st.divider()
+                    display_evaluation_metrics(all_reports['market_trends'].get('evaluation', {}))
+                    
+                    # Visualization
+                    mock_data = generate_mock_data()
+                    fig = create_stock_visualization(
+                        mock_data['historical_data'],
+                        f"{company} Stock Price and Volume",
+                        "Date",
+                        "Price ($)"
+                    )
+                    st.pyplot(fig)
 
-        with tab2:
-            st.header("Financial Projections")
-            if st.button("Generate Financial Projections"):
-                with st.spinner("Generating financial projections..."):
-                    try:
-                        metrics = "Revenue, EBITDA, Net Income, Operating Cash Flow"
-                        projections = financial_analyzer.generate_financial_forecast(
-                            company=company,
-                            timeframe=timeframe,
-                            metrics=metrics
-                        )
-                        
-                        if projections.get('report'):
-                            st.write(projections['report'])
-                            st.divider()
-                            display_evaluation_metrics(projections.get('evaluation', {}))
-                            
-                            # Visualization
-                            mock_data = generate_mock_data()
-                            fig = create_stock_visualization(
-                                mock_data['profit'],
-                                f"{company} Profit Projections",
-                                "Date",
-                                "Profit ($)"
-                            )
-                            st.pyplot(fig)
-                        else:
-                            st.error("Failed to generate financial projections")
-                    except Exception as e:
-                        st.error(f"Error in financial projections: {str(e)}")
+            with tab2:
+                st.header("Financial Projections")
+                if 'error' in all_reports['financial_projections']:
+                    st.error(f"Error in financial projections: {all_reports['financial_projections']['error']}")
+                else:
+                    st.write(all_reports['financial_projections']['report'])
+                    st.divider()
+                    display_evaluation_metrics(all_reports['financial_projections'].get('evaluation', {}))
+                    
+                    # Visualization
+                    mock_data = generate_mock_data()
+                    fig = create_financial_visualization(
+                        mock_data['financial_data'],
+                        f"{company} Financial Projections",
+                        "Date",
+                        "Amount ($)"
+                    )
+                    st.pyplot(fig)
 
-        with tab3:
-            st.header("Investment Recommendations")
-            if st.button("Generate Investment Recommendations"):
-                with st.spinner("Generating investment recommendations..."):
-                    try:
-                        recommendations = financial_analyzer.generate_investment_advice(
-                            company=company,
-                            risk_profile=risk_profile,
-                            investment_horizon=investment_horizon
-                        )
-                        
-                        if recommendations.get('report'):
-                            st.write(recommendations['report'])
-                            st.divider()
-                            display_evaluation_metrics(recommendations.get('evaluation', {}))
-                        else:
-                            st.error("Failed to generate investment recommendations")
-                    except Exception as e:
-                        st.error(f"Error in investment recommendations: {str(e)}")
+            with tab3:
+                st.header("Investment Recommendations")
+                if 'error' in all_reports['investment_recommendations']:
+                    st.error(f"Error in investment recommendations: {all_reports['investment_recommendations']['error']}")
+                else:
+                    st.write(all_reports['investment_recommendations']['report'])
+                    st.divider()
+                    display_evaluation_metrics(all_reports['investment_recommendations'].get('evaluation', {}))
 
         with tab4:
             st.header("Real-Time Stock Data")
-            ticker_symbol = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL for Apple)", "AAPL")
-            period = st.selectbox(
-                "Select Time Period",
-                ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
-                index=5  # Default to 1y
-            )
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                ticker_symbol = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL for Apple)", "AAPL")
+            with col2:
+                period = st.selectbox(
+                    "Select Time Period",
+                    ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
+                    index=5  # Default to 1y
+                )
             
-            if st.button("Fetch Stock Data"):
+            if st.button("Fetch Stock Data", type="secondary", use_container_width=True):
                 with st.spinner("Fetching real-time stock data..."):
                     try:
                         stock_data = get_stock_data(ticker_symbol, period)
@@ -204,9 +262,10 @@ def main():
                             # Display recent news
                             st.subheader("Recent News")
                             for news_item in stock_data.get('news', []):
-                                st.markdown(f"**{news_item['title']}**")
-                                st.markdown(f"*{news_item['publisher']} - {news_item['link']}*")
-                                st.markdown("---")
+                                with st.container():
+                                    st.markdown(f"**{news_item['title']}**")
+                                    st.markdown(f"*{news_item['publisher']} - {news_item['link']}*")
+                                    st.markdown("---")
                         else:
                             st.error(f"Error fetching stock data: {stock_data.get('error', 'Unknown error')}")
                     except Exception as e:
@@ -214,19 +273,19 @@ def main():
 
         # Model Information
         st.sidebar.markdown("---")
-        st.sidebar.header("Model Information")
+        st.sidebar.header("ℹ️ Model Information")
         st.sidebar.markdown("""
         This financial analysis tool uses advanced AI to provide:
-        - Market trend analysis
-        - Financial projections
-        - Investment recommendations
-        - Real-time stock data analysis
+        - 📈 Market trend analysis
+        - 📊 Financial projections
+        - 💡 Investment recommendations
+        - 📱 Real-time stock data analysis
         
         Each report is evaluated for:
-        - Accuracy
-        - Completeness
-        - Actionability
-        - Clarity
+        - ✓ Accuracy
+        - ✓ Completeness
+        - ✓ Actionability
+        - ✓ Clarity
         """)
     except Exception as e:
         st.error(f"Application error: {str(e)}")

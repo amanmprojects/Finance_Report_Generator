@@ -13,8 +13,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 import re
-import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 from typing import Dict, List, Union, Optional
 
@@ -92,43 +91,81 @@ def generate_mock_data():
     """Generate mock financial data for visualization."""
     np.random.seed(42)
     dates = pd.date_range(start='2024-01-01', periods=12, freq='ME')
-    revenue = pd.Series(np.random.normal(1000000, 100000, 12).cumsum(), index=dates, name='Close')
-    profit = pd.Series(np.random.normal(200000, 50000, 12).cumsum(), index=dates, name='Close')
     
-    # Add Volume column for visualization
-    volume_revenue = pd.Series(np.random.randint(100000, 1000000, 12), index=dates, name='Volume')
-    volume_profit = pd.Series(np.random.randint(50000, 500000, 12), index=dates, name='Volume')
+    # Generate price data
+    base_price = 100
+    price_data = pd.Series(
+        base_price * (1 + np.random.normal(0, 0.02, 12).cumsum()),
+        index=dates,
+        name='Close'
+    )
+    
+    # Generate volume data
+    volume_data = pd.Series(
+        np.random.randint(100000, 1000000, 12),
+        index=dates,
+        name='Volume'
+    )
+    
+    # Generate financial projection data
+    base_revenue = 1000000
+    revenue_data = pd.Series(
+        base_revenue * (1 + np.random.normal(0.05, 0.02, 12).cumsum()),
+        index=dates,
+        name='Revenue'
+    )
+    
+    # Create DataFrame with price and volume
+    df = pd.DataFrame({
+        'Close': price_data,
+        'Volume': volume_data
+    })
+    
+    # Create DataFrame with financial projections
+    financial_df = pd.DataFrame({
+        'Revenue': revenue_data,
+        'EBITDA': revenue_data * 0.3,
+        'Net Income': revenue_data * 0.15,
+        'Operating Cash Flow': revenue_data * 0.25
+    })
     
     return {
-        'revenue': pd.DataFrame({'Close': revenue, 'Volume': volume_revenue}),
-        'profit': pd.DataFrame({'Close': profit, 'Volume': volume_profit})
+        'historical_data': df,
+        'financial_data': financial_df,
+        'current_price': price_data.iloc[-1],
+        'market_cap': price_data.iloc[-1] * 1000000,  # Mock market cap
+        'volume': volume_data.iloc[-1],
+        'metrics': calculate_stock_metrics(df),
+        'news': generate_mock_news(),
+        'success': True
     }
 
+def generate_mock_news():
+    """Generate mock news data."""
+    return [
+        {
+            'title': 'Company Reports Strong Q1 Results',
+            'publisher': 'Financial Times',
+            'link': '#',
+            'published': datetime.now().isoformat()
+        },
+        {
+            'title': 'New Product Launch Expected Next Quarter',
+            'publisher': 'Business Insider',
+            'link': '#',
+            'published': datetime.now().isoformat()
+        },
+        {
+            'title': 'Market Analysis: Industry Trends',
+            'publisher': 'Reuters',
+            'link': '#',
+            'published': datetime.now().isoformat()
+        }
+    ]
+
 def get_stock_data(ticker_symbol: str, period: str = "1y") -> Dict:
-    """Fetch real-time stock data with enhanced error handling."""
-    try:
-        ticker = yf.Ticker(ticker_symbol)
-        hist = ticker.history(period=period)
-        info = ticker.info
-        news = ticker.news
-        
-        # Calculate additional metrics
-        metrics = calculate_stock_metrics(hist)
-        
-        return {
-            'historical_data': hist,
-            'current_price': info.get('currentPrice', None),
-            'market_cap': info.get('marketCap', None),
-            'volume': info.get('volume', None),
-            'metrics': metrics,
-            'news': news[:5] if news else [],
-            'success': True
-        }
-    except Exception as e:
-        return {
-            'error': str(e),
-            'success': False
-        }
+    """Get mock stock data instead of real-time data."""
+    return generate_mock_data()
 
 def calculate_stock_metrics(historical_data: pd.DataFrame) -> Dict:
     """Calculate additional stock metrics."""
@@ -207,6 +244,31 @@ def create_stock_visualization(data: pd.DataFrame, title: str, xlabel: str = "Da
         ax.axis('off')
         return fig
 
+def create_financial_visualization(data: pd.DataFrame, title: str, xlabel: str = "Date", ylabel: str = "Amount ($)") -> plt.Figure:
+    """Create visualization for financial projections."""
+    try:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        for column in data.columns:
+            ax.plot(data.index, data[column], label=column, marker='o')
+        
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.grid(True)
+        ax.legend()
+        
+        plt.tight_layout()
+        return fig
+    except Exception as e:
+        print(f"Error in financial visualization: {str(e)}")
+        # Create a simple error figure
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.text(0.5, 0.5, f"Error creating visualization: {str(e)}", 
+                ha='center', va='center')
+        ax.axis('off')
+        return fig
+
 class FinancialAnalysis:
     def __init__(self):
         self.client = setup_client()
@@ -244,12 +306,14 @@ Template:
             
         return metrics
     
-    def generate_market_analysis(self, company: str, industry: str, timeframe: str) -> Dict:
+    def generate_market_analysis(self, company: str, industry: str, timeframe: str, market_cap: float = 100.0, geographic_focus: str = "North America, Europe") -> Dict:
         """Generate comprehensive market analysis with evaluation."""
         prompt = MARKET_TRENDS_PROMPT.format(
             company=company,
             industry=industry,
-            timeframe=timeframe
+            timeframe=timeframe,
+            market_cap=market_cap,
+            geographic_focus=geographic_focus
         )
         
         report = generate_completion(prompt)
@@ -266,7 +330,9 @@ Template:
         prompt = FINANCIAL_PROJECTIONS_PROMPT.format(
             company=company,
             timeframe=timeframe,
-            metrics=metrics
+            metrics=metrics,
+            historical_range="5 years",  # Default value
+            confidence_level="95%"  # Default value
         )
         
         report = generate_completion(prompt)
@@ -283,7 +349,9 @@ Template:
         prompt = INVESTMENT_RECOMMENDATIONS_PROMPT.format(
             company=company,
             risk_profile=risk_profile,
-            investment_horizon=investment_horizon
+            investment_horizon=investment_horizon,
+            portfolio_context="Balanced Portfolio",  # Default value
+            market_regime="Normal Market Conditions"  # Default value
         )
         
         report = generate_completion(prompt)
